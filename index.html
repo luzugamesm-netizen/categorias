@@ -2,231 +2,286 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educación de Categorías Ridery</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulador de Categorías Ridery</title>
     <style>
         :root {
             --verde-menta: #38CEA6;
             --negro-azulado: #0F111E;
             --rosa-intenso: #D71D5C;
-            --azul-real: #272883;
             --blanco: #FFFFFF;
+            --gris-frio: #F1F5F9;
+            --texto: #0F111E;
+            --card-bg: #FFFFFF;
+            --border: #e2e8f0;
+            --rojo-score: #ff4d4d;
+            --amarillo-score: #fbbf24;
+            --verde-score: #22c55e;
+        }
+
+        [data-theme="dark"] {
+            --negro-azulado: #080a12;
+            --blanco: #1a1c2c;
+            --gris-frio: #121420;
+            --texto: #f1f5f9;
+            --card-bg: #24273a;
+            --border: #334155;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--blanco);
-            color: var(--negro-azulado);
-            margin: 0; padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--gris-frio);
+            color: var(--texto);
+            margin: 0; padding: 0;
+            transition: all 0.3s ease;
         }
 
-        .container { max-width: 900px; margin: auto; }
-
-        .header {
-            text-align: center;
-            padding: 20px;
-            border-bottom: 4px solid var(--verde-menta);
-            margin-bottom: 30px;
+        .app-bar {
+            background-color: var(--negro-azulado);
+            color: var(--verde-menta);
+            padding: 15px 20px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
-        .filtros {
-            background: var(--negro-azulado);
-            padding: 20px;
-            border-radius: 12px;
-            display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
+        .theme-switch-wrapper { display: flex; align-items: center; }
+        .theme-switch { display: inline-block; height: 20px; position: relative; width: 40px; }
+        .theme-switch input { display:none; }
+        .slider {
+            background-color: #555;
+            bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0;
+            transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            background-color: white; bottom: 3px; content: ""; height: 14px;
+            left: 4px; position: absolute; transition: .4s; width: 14px; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--verde-menta); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        .content { padding: 15px; max-width: 1100px; margin: auto; }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--verde-menta);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            border-left: 3px solid var(--rosa-intenso);
+            padding-left: 8px;
         }
 
-        .filtros label { color: var(--verde-menta); font-weight: bold; display: block; margin-bottom: 5px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 20px; }
 
+        .input-group { margin-bottom: 15px; position: relative; }
         select, input {
-            width: 100%; padding: 12px; border-radius: 8px; border: 2px solid var(--verde-menta); font-size: 1rem;
+            width: 100%; padding: 12px; background: var(--blanco); color: var(--texto);
+            border: 1px solid var(--border); border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none;
         }
 
-        .grid-categorias {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 15px; margin-bottom: 30px;
+        .score-bar {
+            height: 4px; width: 100%; background: #e2e8f0; border-radius: 2px; margin-top: 5px; overflow: hidden;
+        }
+        .score-fill { height: 100%; width: 0%; transition: 0.3s; }
+
+        .grid-requisitos { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 15px; }
+        .cat-card { background: var(--gris-frio); padding: 12px; border-radius: 10px; border: 1px solid var(--border); }
+        .cat-card.active { border: 2px solid var(--verde-menta); background: rgba(56, 206, 166, 0.1); }
+        .cat-card h3 { margin: 0 0 8px; font-size: 0.85rem; color: var(--verde-menta); text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        
+        .metric-row { display: flex; justify-content: space-between; margin: 6px 0; font-size: 0.75rem; }
+        
+        .btn-main { background: var(--verde-menta); color: #000; border: none; padding: 16px; width: 100%; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 1rem; }
+        .btn-clear { background: none; color: #64748b; border: 1px solid var(--border); padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 0.8rem; }
+        
+        .tabs { display: flex; overflow-x: auto; gap: 4px; margin-top: 15px; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            padding: 10px 15px; border: 1px solid var(--border); background: var(--gris-frio);
+            cursor: pointer; border-radius: 8px 8px 0 0; font-size: 0.7rem; font-weight: bold; color: #64748b; white-space: nowrap;
+        }
+        .tab-btn.active { background: var(--card-bg); border-top: 3px solid var(--verde-menta); color: var(--texto); border-bottom: 1px solid var(--card-bg); }
+        .tab-content { border: 1px solid var(--border); border-top: none; padding: 20px; background: var(--card-bg); border-radius: 0 0 12px 12px; }
+
+        .btn-copy { background: var(--negro-azulado); color: var(--verde-menta); border: none; padding: 12px; border-radius: 6px; width: 100%; cursor: pointer; margin-top: 15px; font-weight: bold; }
+
+        .nota-final {
+            background: rgba(215, 29, 92, 0.08); border: 1.5px solid var(--rosa-intenso);
+            color: var(--rosa-intenso); padding: 15px; border-radius: 10px; font-size: 0.85rem; margin-top: 20px; text-align: center; font-weight: 600;
         }
 
-        .card {
-            border: 2px solid #eef; padding: 15px; border-radius: 12px; text-align: center;
-        }
-
-        .card.active {
-            border-color: var(--verde-menta);
-            background: rgba(56, 206, 166, 0.1);
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(56, 206, 166, 0.2);
-        }
-
-        .card h3 { margin: 0 0 10px; color: var(--azul-real); }
-
-        .buscador-match {
-            background: #f8fafc; border: 2px solid var(--verde-menta);
-            padding: 25px; border-radius: 15px;
-        }
-
-        button {
-            background: var(--verde-menta); color: var(--negro-azulado);
-            border: none; padding: 15px; width: 100%; border-radius: 10px;
-            font-weight: 800; font-size: 1.1rem; cursor: pointer;
-            margin-top: 15px; text-transform: uppercase;
-        }
-
-        .feedback-area {
-            margin-top: 20px; padding: 20px; border-radius: 10px;
-            display: none; background: white; border-left: 6px solid var(--verde-menta);
-        }
-
-        .insuficiente { color: var(--rosa-intenso); font-weight: bold; }
-
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>Dashboard de Categorías <span>Ridery</span></h1>
-    </div>
-
-    <div class="filtros">
-        <div style="flex:1">
-            <label>CIUDAD (31)</label>
-            <select id="ciudad" onchange="actualizar()"></select>
-        </div>
-        <div style="flex:1">
-            <label>TIPO DE VEHÍCULO</label>
-            <select id="flota" onchange="actualizar()">
-                <option value="Carro">Carro 🚗</option>
-                <option value="Moto">Moto 🏍️</option>
-            </select>
+    <div class="app-bar">
+        <span>SIMULADOR RIDERY</span>
+        <div class="theme-switch-wrapper">
+            <label class="theme-switch" for="checkbox">
+                <input type="checkbox" id="checkbox" onchange="toggleTheme()" />
+                <div class="slider"></div>
+            </label>
         </div>
     </div>
 
-    <div class="grid-categorias" id="grid"></div>
-
-    <div class="buscador-match">
-        <h2 style="margin-top:0; color: var(--azul-real);">Simulador de Explicación</h2>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-            <div><label>Viajes</label><input type="number" id="in_v" value="0"></div>
-            <div><label>Rating</label><input type="number" id="in_r" step="0.1" value="0"></div>
-            <div><label>Canc %</label><input type="number" id="in_c" value="0"></div>
-            <div><label>Acept %</label><input type="number" id="in_a" value="0"></div>
+    <div class="content">
+        
+        <div class="section-title">1. Configuración de Ciudad</div>
+        <div class="card">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <select id="ciudad" onchange="actualizarTodo()"><option value="">Ciudad</option></select>
+                <select id="flota" onchange="actualizarTodo()"><option value="">Flota</option><option value="Carro">Carro 🚗</option><option value="Moto">Moto 🏍️</option></select>
+            </div>
+            <div id="grid-requisitos" class="grid-requisitos"></div>
         </div>
-        <button onclick="explicar()">Generar Explicación para Conductor</button>
 
-        <div id="feedback" class="feedback-area">
-            <div id="fb-titulo" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 10px;"></div>
-            <div id="fb-cuerpo" style="line-height: 1.6;"></div>
+        <div class="section-title">2. Métricas del Mes (Visual Score)</div>
+        <div class="card">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-group">
+                    <label style="font-size: 0.6rem; font-weight: bold;">VIAJES</label>
+                    <input type="number" id="v_in" oninput="updateScore('v')">
+                    <div class="score-bar"><div id="score_v" class="score-fill"></div></div>
+                </div>
+                <div class="input-group">
+                    <label style="font-size: 0.6rem; font-weight: bold;">RATING</label>
+                    <input type="number" id="r_in" step="0.1" oninput="updateScore('r')">
+                    <div class="score-bar"><div id="score_r" class="score-fill"></div></div>
+                </div>
+                <div class="input-group">
+                    <label style="font-size: 0.6rem; font-weight: bold;">CANC. %</label>
+                    <input type="number" id="c_in" oninput="updateScore('c')">
+                    <div class="score-bar"><div id="score_c" class="score-fill"></div></div>
+                </div>
+                <div class="input-group">
+                    <label style="font-size: 0.6rem; font-weight: bold;">ACEPT. %</label>
+                    <input type="number" id="a_in" oninput="updateScore('a')">
+                    <div class="score-bar"><div id="score_a" class="score-fill"></div></div>
+                </div>
+            </div>
+            <button class="btn-main" onclick="analizar()">CALCULAR CATEGORÍA</button>
+            <button class="btn-clear" onclick="limpiarTodo()">Limpiar</button>
+        </div>
+
+        <div id="resultados" class="hidden">
+            <div class="section-title">3. Sugerencias de Respuesta</div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('directo', this)">DIRECTO</button>
+                <button class="tab-btn" onclick="showTab('empatico', this)">EMPÁTICO</button>
+                <button class="tab-btn" onclick="showTab('cercano', this)">CERCANO (RESPETUOSO)</button>
+                <button class="tab-btn" onclick="showTab('peras', this)">PERAS Y MANZANAS</button>
+            </div>
+            <div id="directo" class="tab-content"><div id="t1"></div><button class="btn-copy" onclick="copiar('t1')">COPIAR</button></div>
+            <div id="empatico" class="tab-content hidden"><div id="t2"></div><button class="btn-copy" onclick="copiar('t2')">COPIAR</button></div>
+            <div id="cercano" class="tab-content hidden"><div id="t3"></div><button class="btn-copy" onclick="copiar('t3')">COPIAR</button></div>
+            <div id="peras" class="tab-content hidden"><div id="t4"></div><button class="btn-copy" onclick="copiar('t4')">COPIAR</button></div>
+
+            <div class="nota-final">
+                ⚠️ nota: no debes copiar y enviarlo al conductor directamente, apoyate con la IA para que le des un tono a la conversacion
+            </div>
         </div>
     </div>
-</div>
 
 <script>
-    const ciudades = ["Maracay","Puerto La Cruz","Mérida","Valencia","Barinas","Maturín","Caracas","Maracaibo","Ciudad Guayana","Barquisimeto","Porlamar","San Cristóbal","Guarenas","Los Teques","Acarigua","San Antonio de Los Altos","Coro","Guatire","Cumaná","La Guaira","La Victoria","Charallave","Barcelona","Cabimas","Ciudad Bolívar","Colonia Tovar","Cúa","El Vigía","Higuerote","Margarita","Puerto Cabello"].sort();
-
-    const niveles = [
-        { n: "Evaluación", r: 0, c: 100, a: 0 },
-        { n: "Impulso", r: 4.0, c: 20, a: 35 },
-        { n: "En Ascenso", r: 4.5, c: 15, a: 40 },
-        { n: "Destacado", r: 4.7, c: 12, a: 45 },
-        { n: "Líder", r: 4.8, c: 10, a: 60 }
-    ];
-
-    // Data aproximada basada en tus archivos (Reseteada para las 31 ciudades)
-    const dataV = {
-        "Carro": {
-            "Maracay":[76,77,96,120,150],"Puerto La Cruz":[89,90,113,141,177],"Mérida":[73,74,92,115,144],"Valencia":[73,74,92,115,144],"Barinas":[74,75,93,117,146],"Maturín":[73,74,92,115,144],"Caracas":[80,81,101,126,157],"Maracaibo":[73,74,92,115,144],"Ciudad Guayana":[73,74,92,115,144],"Barquisimeto":[50,51,64,80,100],"Porlamar":[50,51,63,79,99],"San Cristóbal":[43,44,55,69,86],"Guarenas":[31,32,40,50,63],"Los Teques":[31,32,40,50,63],"Acarigua":[32,33,42,52,65],"San Antonio de Los Altos":[31,32,40,50,63],"Coro":[82,83,104,130,162],"Guatire":[31,32,40,50,63],"Cumaná":[35,36,45,56,70],"La Guaira":[35,36,45,56,70],"La Victoria":[35,36,45,56,70],"Charallave":[31,32,40,50,63],"Barcelona":[89,90,113,141,177],"Cabimas":[35,36,45,56,70],"Ciudad Bolívar":[73,74,92,115,144],"Colonia Tovar":[35,36,45,56,70],"Cúa":[31,32,40,50,63],"El Vigía":[73,74,92,115,144],"Higuerote":[35,36,45,56,70],"Margarita":[50,51,63,79,99],"Puerto Cabello":[35,36,45,56,70]
-        },
-        "Moto": {
-            "Maracay":[143,144,152,167,192],"Puerto La Cruz":[129,130,136,150,172],"Mérida":[136,137,144,159,182],"Valencia":[104,105,110,121,139],"Barinas":[115,116,122,134,154],"Maturín":[107,108,113,124,143],"Caracas":[78,79,83,91,105],"Maracaibo":[73,74,78,85,98],"Ciudad Guayana":[73,74,78,85,98],"Barquisimeto":[60,61,64,71,81],"Porlamar":[59,60,63,69,79],"San Cristóbal":[82,83,87,96,110],"Guarenas":[31,32,34,37,43],"Los Teques":[31,32,34,37,43],"Acarigua":[31,32,34,37,43],"San Antonio de Los Altos":[31,32,34,37,43],"Coro":[73,74,78,85,98],"Guatire":[31,32,34,37,43],"Cumaná":[60,61,64,71,81],"La Guaira":[60,61,64,71,81],"La Victoria":[143,144,152,167,192],"Charallave":[31,32,34,37,43],"Barcelona":[129,130,136,150,172],"Cabimas":[60,61,64,71,81],"Ciudad Bolívar":[73,74,78,85,98],"Colonia Tovar":[60,61,64,71,81],"Cúa":[31,32,34,37,43],"El Vigía":[136,137,144,159,182],"Higuerote":[60,61,64,71,81],"Margarita":[59,60,63,69,79],"Puerto Cabello":[60,61,64,71,81]
-        }
-    };
+    const ciudades = ["Acarigua", "Barcelona", "Barinas", "Barquisimeto", "Cabimas", "Caracas", "Charallave", "Ciudad Bolívar", "Ciudad Guayana", "Colonia Tovar", "Coro", "Cúa", "Cumaná", "El Vigía", "Guarenas", "Guatire", "Higuerote", "La Guaira", "La Victoria", "Los Teques", "Maracaibo", "Maracay", "Margarita", "Mérida", "Maturín", "Porlamar", "Puerto Cabello", "Puerto La Cruz", "San Antonio de Los Altos", "San Cristóbal", "Valencia"].sort();
+    const criterios = [{n:"Evaluación", r:0, c:100, a:0}, {n:"Impulso", r:4.0, c:20, a:35}, {n:"En Ascenso", r:4.5, c:15, a:40}, {n:"Destacado", r:4.7, c:12, a:45}, {n:"Líder", r:4.8, c:10, a:60}];
+    
+    // Datos Carro y Moto cargados
+    const dataCarro = {"Maracay":[76,77,96,120,150],"Puerto La Cruz":[89,90,113,141,177],"Mérida":[73,74,92,115,144],"Valencia":[73,74,92,115,144],"Barinas":[74,75,93,117,146],"Maturín":[73,74,92,115,144],"Caracas":[80,81,101,126,157],"Maracaibo":[73,74,92,115,144],"Ciudad Guayana":[73,74,92,115,144],"Barquisimeto":[50,51,64,80,100],"Porlamar":[50,51,63,79,99],"San Cristóbal":[43,44,55,69,86],"Guarenas":[31,32,40,50,63],"Los Teques":[31,32,40,50,63],"Acarigua":[32,33,42,52,65],"San Antonio de Los Altos":[31,32,40,50,63],"Coro":[82,83,104,130,162],"Guatire":[31,32,40,50,63],"Cumaná":[31,32,40,50,63],"La Guaira":[31,32,40,50,63],"La Victoria":[31,32,40,50,63],"Charallave":[39,40,50,63,78],"Barcelona":[31,32,40,50,63],"Cabimas":[31,32,40,50,63],"Ciudad Bolívar":[31,32,40,50,63],"Colonia Tovar":[31,32,40,50,63],"Cúa":[31,32,40,50,63],"El Vigía":[31,32,40,50,63],"Higuerote":[31,32,40,50,63],"Margarita":[31,32,40,50,63],"Puerto Cabello":[31,32,40,50,63]};
+    const dataMoto = {"Maracay":[143,144,152,167,192],"Puerto La Cruz":[129,130,136,150,172],"Mérida":[136,137,144,159,182],"Valencia":[104,105,110,121,139],"Barinas":[115,116,122,134,154],"Maturín":[107,108,113,124,143],"Caracas":[78,79,83,91,105],"Maracaibo":[73,74,78,85,98],"Ciudad Guayana":[73,74,78,85,98],"Barquisimeto":[60,61,64,71,81],"Porlamar":[59,60,63,69,79],"San Cristóbal":[82,83,87,96,110],"Guarenas":[31,32,34,37,43],"Los Teques":[31,32,34,37,43],"Acarigua":[31,32,34,37,43],"San Antonio de Los Altos":[31,32,34,37,43],"Coro":[73,74,78,85,98],"Guatire":[31,32,34,37,43],"Cumaná":[31,32,34,37,43],"La Guaira":[31,32,34,37,43],"La Victoria":[31,32,34,37,43],"Charallave":[31,32,34,37,43],"Barcelona":[31,32,34,37,43],"Cabimas":[31,32,34,37,43],"Ciudad Bolívar":[31,32,34,37,43],"Colonia Tovar":[31,32,34,37,43],"Cúa":[31,32,34,37,43],"El Vigía":[31,32,34,37,43],"Higuerote":[31,32,34,37,43],"Margarita":[31,32,34,37,43],"Puerto Cabello":[31,32,34,37,43]};
 
     function init() {
         const sel = document.getElementById('ciudad');
-        ciudades.forEach(c => {
-            let opt = document.createElement('option');
-            opt.value = c; opt.innerText = c; sel.appendChild(opt);
-        });
-        actualizar();
+        ciudades.forEach(c => { let opt = document.createElement('option'); opt.value = c; opt.innerText = c; sel.appendChild(opt); });
     }
 
-    function actualizar() {
+    function actualizarTodo() { actualizarTabla(); updateAllScores(); }
+
+    function actualizarTabla() {
         const ciu = document.getElementById('ciudad').value;
         const flo = document.getElementById('flota').value;
-        const vData = dataV[flo][ciu];
-        const grid = document.getElementById('grid');
-        
-        grid.innerHTML = niveles.map((niv, i) => `
-            <div class="card" id="card-${i}">
-                <h3>${niv.n}</h3>
-                <div style="font-size:0.8rem">Viajes: <b>${vData[i]}</b></div>
-                <div style="font-size:0.8rem">Rating: <b>${i==0?'-':niv.r}</b></div>
-                <div style="font-size:0.8rem">Canc: <b>${i==0?'-':niv.c+'%'}</b></div>
+        if(!ciu || !flo) return;
+        const vReq = flo === "Carro" ? dataCarro[ciu] : dataMoto[ciu];
+        document.getElementById('grid-requisitos').innerHTML = criterios.map((n, i) => `
+            <div class="cat-card" id="card-${i}">
+                <h3>${n.n}</h3>
+                <div class="metric-row"><span>Viajes:</span><b>${vReq[i]}</b></div>
+                <div class="metric-row"><span>Rating:</span><b>${i==0?'-':n.r}</b></div>
+                <div class="metric-row"><span>Canc:</span><b>${i==0?'-':n.c+'%'}</b></div>
+                <div class="metric-row"><span>Acep:</span><b>${i==0?'-':n.a+'%'}</b></div>
             </div>
         `).join('');
     }
 
-    function explicar() {
+    function updateScore(type) {
         const ciu = document.getElementById('ciudad').value;
         const flo = document.getElementById('flota').value;
-        const vReq = dataV[flo][ciu];
-        
-        const v = parseInt(document.getElementById('in_v').value) || 0;
-        const r = parseFloat(document.getElementById('in_r').value) || 0;
-        const c = parseFloat(document.getElementById('in_c').value) || 0;
-        const a = parseFloat(document.getElementById('in_a').value) || 0;
+        if(!ciu || !flo) return;
+        const vMax = flo === "Carro" ? dataCarro[ciu][4] : dataMoto[ciu][4];
+        const val = parseFloat(document.getElementById(type+'_in').value) || 0;
+        let percent = 0; let color = 'var(--rojo-score)';
+
+        if(type === 'v') percent = (val / vMax) * 100;
+        if(type === 'r') percent = (val / 5) * 100;
+        if(type === 'c') percent = (100 - val); 
+        if(type === 'a') percent = val;
+
+        if(percent >= 90) color = 'var(--verde-score)';
+        else if(percent >= 60) color = 'var(--amarillo-score)';
+
+        const fill = document.getElementById('score_'+type);
+        fill.style.width = Math.min(percent, 100) + '%';
+        fill.style.backgroundColor = color;
+    }
+
+    function updateAllScores() { ['v','r','c','a'].forEach(updateScore); }
+
+    function analizar() {
+        const ciu = document.getElementById('ciudad').value;
+        const flo = document.getElementById('flota').value;
+        if (!ciu || !flo) return alert("Selecciona Ciudad y Flota.");
+        const vReq = flo === "Carro" ? dataCarro[ciu] : dataMoto[ciu];
+        const v = parseInt(document.getElementById('v_in').value) || 0;
+        const r = parseFloat(document.getElementById('r_in').value) || 0;
+        const c = parseFloat(document.getElementById('c_in').value) || 0;
+        const a = parseFloat(document.getElementById('a_in').value) || 0;
 
         let actual = 0;
         for(let i=4; i>=0; i--) {
-            if(i === 0 || (v >= vReq[i] && r >= niveles[i].r && c <= niveles[i].c && a >= niveles[i].a)) {
-                actual = i; break;
-            }
+            if(i === 0 || (v >= vReq[i] && r >= criterios[i].r && c <= criterios[i].c && a >= criterios[i].a)) { actual = i; break; }
         }
 
-        // Resaltado visual
-        document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+        const nxt = criterios[actual + 1] || criterios[4];
+        const nxtV = vReq[actual + 1] || vReq[4];
+        let f = [];
+        if (v < nxtV) f.push(`${nxtV - v} viajes adicionales`);
+        if (r < nxt.r) f.push(`alcanzar un rating de ${nxt.r}`);
+        if (c > nxt.c) f.push(`mantener la cancelación por debajo del ${nxt.c}%`);
+        if (a < nxt.a) f.push(`subir la aceptación al ${nxt.a}%`);
+        const faltanStr = f.join(", ");
+
+        // DIRECTO
+        document.getElementById('t1').innerText = `Rider, su categoría actual es ${criterios[actual].n}. Para ascender a ${nxt.n} requiere: ${faltanStr}.`;
+        // EMPÁTICO
+        document.getElementById('t2').innerText = `¡Hola! Comprendo su interés por mejorar su nivel. Actualmente se encuentra en ${criterios[actual].n}, pero para calificar como ${nxt.n} el próximo mes, el enfoque debe estar en ${faltanStr}. ¡Estamos para apoyarle!`;
+        // CERCANO (Respetuoso)
+        document.getElementById('t3').innerText = `Estimado Rider, hemos revisado su progreso y va por buen camino como ${criterios[actual].n}. Si logra fortalecer puntos como ${faltanStr}, muy pronto alcanzará el nivel de ${nxt.n}. ¡Siga adelante!`;
+        // PERAS Y MANZANAS
+        document.getElementById('t4').innerText = `Le explico con detalle: El sistema califica 4 áreas. Usted tiene ${v} viajes (la meta es ${nxtV}), su rating es ${r} (debe ser ${nxt.r}), su tasa de cancelación es ${c}% (el límite es ${nxt.c}%) y su aceptación es ${a}% (debe ser ${nxt.a}%). Cumpliendo esto, su categoría sube automáticamente.`;
+
+        document.getElementById('resultados').classList.remove('hidden');
+        document.querySelectorAll('.cat-card').forEach(card => card.classList.remove('active'));
         document.getElementById(`card-${actual}`).classList.add('active');
-
-        const fb = document.getElementById('feedback');
-        fb.style.display = 'block';
-        const tit = document.getElementById('fb-titulo');
-        const cuerpo = document.getElementById('fb-cuerpo');
-
-        if(actual < 4) {
-            const sgte = niveles[actual + 1];
-            const vFaltan = vReq[actual + 1] - v;
-            
-            tit.innerHTML = `Estatus: <span style="color:var(--azul-real)">${niveles[actual].n}</span>`;
-            tit.style.color = "var(--negro-azulado)";
-            
-            let razones = [];
-            if(v < vReq[actual + 1]) razones.push(`no tienes los <b>viajes suficientes</b> (te faltan ${vFaltan})`);
-            if(r < sgte.r) razones.push(`tu <b>rating</b> (${r}) está por debajo del mínimo de ${sgte.r}`);
-            if(c > sgte.c) razones.push(`tu <b>tasa de cancelación</b> (${c}%) está muy elevada (el máximo es ${sgte.c}%)`);
-            if(a < sgte.a) razones.push(`tu <b>tasa de aceptación</b> (${a}%) es muy baja (mínimo ${sgte.a}%)`);
-
-            let explicacion = `Hola, actualmente no cumples para subir a la categoría <b>"${sgte.n}"</b> porque `;
-            if(razones.length === 1) explicacion += razones[0] + ".";
-            else {
-                const ultimo = razones.pop();
-                explicacion += razones.join(", ") + " y también porque " + ultimo + ".";
-            }
-
-            cuerpo.innerHTML = explicacion + ` <br><br><span class="insuficiente">¡Sigue trabajando en estos puntos para el próximo corte!</span>`;
-            fb.style.borderLeftColor = "var(--rosa-intenso)";
-        } else {
-            tit.innerHTML = "Estatus: LÍDER 👑";
-            cuerpo.innerHTML = "¡Excelente trabajo! Cumples con todos los estándares máximos de Ridery. Mantén tus indicadores así para conservar los beneficios.";
-            fb.style.borderLeftColor = "var(--verde-menta)";
-        }
     }
 
+    function toggleTheme() { document.documentElement.setAttribute('data-theme', document.getElementById('checkbox').checked ? 'dark' : 'light'); }
+    function limpiarTodo() { document.querySelectorAll('input').forEach(i => { i.value = ''; }); document.getElementById('resultados').classList.add('hidden'); updateAllScores(); }
+    function showTab(id, btn) { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.remove('hidden'); btn.classList.add('active'); }
+    function copiar(id) { navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => alert("Respuesta copiada con éxito")); }
     window.onload = init;
 </script>
-
 </body>
 </html>
